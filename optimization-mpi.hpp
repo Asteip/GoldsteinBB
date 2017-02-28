@@ -1,5 +1,0 @@
-#ifndef OPTIMIZATION_HPP
-#define OPTIMIZATION_HPP
-
-
-#endif
