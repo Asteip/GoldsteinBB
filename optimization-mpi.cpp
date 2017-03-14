@@ -15,6 +15,7 @@
 #include "interval.h"
 #include "functions.h"
 #include "minimizer.h"
+#include "mpi.h"
 
 using namespace std;
 
@@ -75,8 +76,14 @@ void minimize(itvfun f,  // Function to minimize
 }
 
 
-int main(void)
+int main(int argc, char * argv[])
 {
+  int rank, numProcs;
+
+  MPI_Init(&argc, &argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
   cout.precision(16);
   // By default, the currently known upper bound for the minimizer is +oo
   double min_ub = numeric_limits<double>::infinity();
@@ -96,29 +103,34 @@ int main(void)
   bool good_choice;
 
   // Asking the user for the name of the function to optimize
-  do {
-    good_choice = true;
+  if(rank == 0){
+    do {
+      good_choice = true;
 
-    cout << "Which function to optimize?\n";
-    cout << "Possible choices: ";
-    for (auto fname : functions) {
-      cout << fname.first << " ";
-    }
-    cout << endl;
-    cin >> choice_fun;
-    
-    try {
-      fun = functions.at(choice_fun);
-    } catch (out_of_range) {
-      cerr << "Bad choice" << endl;
-      good_choice = false;
-    }
-  } while(!good_choice);
+      cout << "Which function to optimize?\n";
+      cout << "Possible choices: ";
+      for (auto fname : functions) {
+        cout << fname.first << " ";
+      }
+      cout << endl;
+      cin >> choice_fun;
+      
+      try {
+        fun = functions.at(choice_fun);
+      } catch (out_of_range) {
+        cerr << "Bad choice" << endl;
+        good_choice = false;
+      }
+    } while(!good_choice);
 
-  // Asking for the threshold below which a box is not split further
-  cout << "Precision? ";
-  cin >> precision;
-  
+    // Asking for the threshold below which a box is not split further
+    cout << "Precision? ";
+    cin >> precision;
+  }
+
+  MPI_Bcast(&fun, sizeof(opt_fun_t), MPI_BYTE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&precision, sizeof(double), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
   minimize(fun.f,fun.x,fun.y,precision,min_ub,minimums);
   
   // Displaying all potential minimizers
@@ -126,4 +138,6 @@ int main(void)
        ostream_iterator<minimizer>(cout,"\n"));    
   cout << "Number of minimizers: " << minimums.size() << endl;
   cout << "Upper bound for minimum: " << min_ub << endl;
+
+  MPI_Finalize();
 }
