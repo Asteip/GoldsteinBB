@@ -11,16 +11,13 @@
 .PHONY: clean
 
 BINROOT=/comptes/goualard-f/local/bin
-#BINROOT=/usr/bin
 
 COMMON_SOURCES = interval.cpp minimizer.cpp functions.cpp
 COMMON_OBJECTS = $(COMMON_SOURCES:.cpp=.o)
 
 CXXFLAGS = -std=gnu++0x -Wall -I/comptes/goualard-f/local/include
-#CXXFLAGS = -std=gnu++0x -Wall
 
 MPICXX = $(BINROOT)/mpic++
-
 
 all: optimization-seq optimization-par
 
