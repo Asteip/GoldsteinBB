@@ -199,10 +199,13 @@ int main(int argc, char * argv[])
 	debut = clock();
 
 	// Calcul du minimum pour chaque sous-intervalle de Y et pour l'intervalle de X de la machine courante
-	#pragma omp parallel for reduction (min:local_min_ub)
-	for(int i = 0 ; i < numProcs ; ++i){
-		minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub,minimums);
-	}
+	#pragma omp parallel
+	{
+		#pragma omp for reduction (min:local_min_ub)
+		for(int i = 0 ; i < numProcs ; ++i){
+			minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub,minimums);
+		}
+	}	
 	
 	// Trouver le minimum des minimum
 	MPI_Reduce(&local_min_ub, &min_ub, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
