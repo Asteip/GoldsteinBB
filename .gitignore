@@ -31,3 +31,6 @@ interval.cpp
 *.out
 *.app
 
+optimization-mpi
+optimization-seq
+

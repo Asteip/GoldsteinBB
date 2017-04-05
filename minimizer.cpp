@@ -9,15 +9,14 @@
 */
 
 #include <iostream>
-#include <boost/format.hpp>
+//#include <boost/format.hpp>
 #include "interval.h"
 #include "minimizer.h"
 
 using namespace std;
 
 ostream& operator<<(ostream& os, const minimizer& m)
-{
-  os << boost::format("{(%1%,%2%), [%3%, %4%]}") 
-    % m.xmin % m.ymin % m.lbmin % m.ubmin;
-  return os;
+{    
+    os << "{(" << m.xmin << "," << m.ymin << "), [" << m.lbmin << ", " << m.ubmin << "]}";
+	return os;
 }
