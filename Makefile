@@ -22,16 +22,16 @@ CXXFLAGS = -std=gnu++0x -Wall -I/comptes/goualard-f/local/include
 MPICXX = $(BINROOT)/mpic++
 
 
-all: optimization-seq optimization-mpi
+all: optimization-seq optimization-par
 
 optimization-seq: optimization-seq.cpp $(COMMON_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(COMMON_OBJECTS) -lm
 
-optimization-mpi: optimization-mpi.cpp $(COMMON_OBJECTS)
+optimization-par: optimization-par.cpp $(COMMON_OBJECTS)
 	$(MPICXX) $(CXXFLAGS) -fopenmp -o $@ $< $(COMMON_OBJECTS) -lm
 
 $(COMMON_OBJECTS): %.o: %.cpp %.h
 
 
 clean:
-	-rm optimization-seq optimization-mpi $(COMMON_OBJECTS)
+	-rm optimization-seq optimization-par $(COMMON_OBJECTS)
