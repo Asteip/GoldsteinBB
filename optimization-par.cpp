@@ -18,6 +18,7 @@
 #include "functions.h"
 #include "minimizer.h"
 #include "mpi.h"
+#include "omp.h"
 #include <ctime>
 
 using namespace std;
@@ -162,9 +163,9 @@ int main(int argc, char * argv[])
 		lx = fun.x.left();
 		
 		// Remplissage des tableaux de sous-intervalles de X
+		#pragma omp parallel for
 		for (int i = 0 ; i < numProcs ; ++i){	
-			tabX[i] = interval(lx, lx + siX);
-			lx += siX;
+			tabX[i] = interval(lx + siX * i, lx + siX * (i + 1));
 		}
 	}
 	
@@ -189,18 +190,18 @@ int main(int argc, char * argv[])
 	// Borne gauche de l'intervalle de Y
 	ly = fun.y.left();
 	
-	// Remplissage des tableaus de sous-intervalles de Y
+	// Remplissage des tableaux de sous-intervalles de Y
+	#pragma omp parallel for
 	for (int i = 0 ; i < numProcs ; ++i){		
-		tabY[i] = interval(ly, ly + siY);
-		ly += siY;
+		tabY[i] = interval(ly + siY * i, ly + siY * (i + 1));
 	}
 	
 	debut = clock();
 
 	// Calcul du minimum pour chaque sous-intervalle de Y et pour l'intervalle de X de la machine courante
+	#pragma omp parallel for reduction (min:local_min_ub)
 	for(int i = 0 ; i < numProcs ; ++i){
 		minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub,minimums);
-		//if(local_min_ub < min_ub) min_ub = local_min_ub;
 	}
 	
 	// Trouver le minimum des minimum
