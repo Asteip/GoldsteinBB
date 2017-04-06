@@ -33,4 +33,4 @@ interval.cpp
 
 optimization-seq
 optimization-par
-
+optimization-mpi
