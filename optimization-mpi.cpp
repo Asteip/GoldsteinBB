@@ -176,8 +176,7 @@ int main(int argc, char * argv[])
 	// Envoi des sous-intervalles de X aux autres machines.
 	MPI_Scatter(&tabX, sizeof(interval), MPI_BYTE, &sliceX, sizeof(interval), MPI_BYTE, 0, MPI_COMM_WORLD);
 	
-	// PROBLEME : On ne peut utiliser que des puissances de 2 pour le nombre de machine, ceci est dû au split des boxe, qui 
-	// divise en 4 la boxe d'origine...
+	// PROBLEME : On ne peut utiliser que des puissances de 2 pour le nombre de machine, ceci est dû au split des boxe...
 	
 	/*
 	 * Calcul des sous-intervalles de Y pour obtenir des cubes lors de l'appel à minimize. Chaque machine doit

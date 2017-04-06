@@ -15,6 +15,7 @@
 #include "interval.h"
 #include "functions.h"
 #include "minimizer.h"
+#include <ctime>
 
 using namespace std;
 
@@ -93,6 +94,9 @@ int main(void)
   // The information on the function chosen (pointer and initial box)
   opt_fun_t fun;
   
+  // Execution time
+  time_t debut, fin;
+  
   bool good_choice;
 
   // Asking the user for the name of the function to optimize
@@ -119,11 +123,16 @@ int main(void)
   cout << "Precision? ";
   cin >> precision;
   
+  debut = clock();
+  
   minimize(fun.f,fun.x,fun.y,precision,min_ub,minimums);
+  
+  fin = clock();
   
   // Displaying all potential minimizers
   copy(minimums.begin(),minimums.end(),
        ostream_iterator<minimizer>(cout,"\n"));    
   cout << "Number of minimizers: " << minimums.size() << endl;
   cout << "Upper bound for minimum: " << min_ub << endl;
+  cout << "Time : " << (double) (fin - debut) / CLOCKS_PER_SEC << "s" << endl;
 }

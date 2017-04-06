@@ -45,38 +45,63 @@ void minimize(itvfun f,  // Function to minimize
 	      double& min_ub,  // Current minimum upper bound
 	      minimizer_list& ml) // List of current minimizers
 {
-	interval fxy = f(x,y);
+	interval fxy;
+	
+	#pragma omp critical(section_0)
+		fxy = f(x,y);
+		
+	double private_x_width = 0.0;
 
 	if (fxy.left() > min_ub) { // Current box cannot contain minimum?
 		return ;
 	}
 
-	if (fxy.right() < min_ub) { // Current box contains a new minimum?
-		min_ub = fxy.right();
-		// Discarding all saved boxes whose minimum lower bound is 
-		// greater than the new minimum upper bound
-		auto discard_begin = ml.lower_bound(minimizer{0,0,min_ub,0});
-		ml.erase(discard_begin,ml.end());
+	#pragma omp critical(section_1)
+	{
+		if (fxy.right() < min_ub) { // Current box contains a new minimum?
+			min_ub = fxy.right();
+			// Discarding all saved boxes whose minimum lower bound is 
+			// greater than the new minimum upper bound
+			auto discard_begin = ml.lower_bound(minimizer{0,0,min_ub,0});
+			ml.erase(discard_begin,ml.end());
+		}
 	}
 
 	// Checking whether the input box is small enough to stop searching.
 	// We can consider the width of one dimension only since a box
 	// is always split equally along both dimensions
-	if (x.width() <= threshold) { 
+	
+	
+	#pragma omp critical(section_2)
+		private_x_width = x.width();
+		
+	if (private_x_width <= threshold) { 
 		// We have potentially a new minimizer
-		ml.insert(minimizer{x,y,fxy.left(),fxy.right()});
+		#pragma omp critical(section_3)
+			ml.insert(minimizer{x,y,fxy.left(),fxy.right()});
+		
 		return ;
 	}
 
 	// The box is still large enough => we split it into 4 sub-boxes
 	// and recursively explore them
 	interval xl, xr, yl, yr;
-	split_box(x,y,xl,xr,yl,yr);
-
-	minimize(f,xl,yl,threshold,min_ub,ml);
-	minimize(f,xl,yr,threshold,min_ub,ml);
-	minimize(f,xr,yl,threshold,min_ub,ml);
-	minimize(f,xr,yr,threshold,min_ub,ml);
+	
+	#pragma omp critical(section_4)
+		split_box(x,y,xl,xr,yl,yr);
+	
+	#pragma omp parallel
+	#pragma omp sections
+	{
+		#pragma omp section
+		minimize(f,xl,yl,threshold,min_ub,ml);
+		#pragma omp section
+		minimize(f,xl,yr,threshold,min_ub,ml);
+		#pragma omp section
+		minimize(f,xr,yl,threshold,min_ub,ml);
+		#pragma omp section
+		minimize(f,xr,yr,threshold,min_ub,ml);
+	}
 }
 
 
@@ -178,8 +203,7 @@ int main(int argc, char * argv[])
 	// Envoi des sous-intervalles de X aux autres machines.
 	MPI_Scatter(&tabX, sizeof(interval), MPI_BYTE, &sliceX, sizeof(interval), MPI_BYTE, 0, MPI_COMM_WORLD);
 	
-	// PROBLEME : On ne peut utiliser que des puissances de 2 pour le nombre de machine, ceci est dû au split des boxe, qui 
-	// divise en 4 la boxe d'origine...
+	// PROBLEME : On ne peut utiliser que des puissances de 2 pour le nombre de machine...
 	
 	/*
 	 * Calcul des sous-intervalles de Y pour obtenir des cubes lors de l'appel à minimize. Chaque machine doit
@@ -202,23 +226,26 @@ int main(int argc, char * argv[])
 	}
 
 	// Calcul du minimum pour chaque sous-intervalle de Y et pour l'intervalle de X de la machine courante
-	#pragma omp parallel
-	{
-		double local_min_ub_private = numeric_limits<double>::infinity();
-		minimizer_list minimums_private;
+	//#pragma omp parallel
+	//{
+		//double local_min_ub_private = numeric_limits<double>::infinity();
+		//minimizer_list minimums_private;
 		
-		#pragma omp for //reduction (min:local_min_ub)
+		//#pragma omp parallel for //reduction (min:local_min_ub)
 		for(int i = 0 ; i < numProcs ; ++i){
-			minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub_private,minimums_private);
-			#pragma omp critical
-			{
-				if(local_min_ub > local_min_ub_private)	
-					local_min_ub = local_min_ub_private;
+			minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub,minimums);
+			
+			//#pragma omp critical
+			//{
+			//	if(local_min_ub > local_min_ub_private)	
+			//		local_min_ub = local_min_ub_private;
 				
-				minimums = minimums_private;
-			}
+			//	minimums = minimums_private;
+			//}
 		}
-	}
+	//}
+	
+	// Abandon du omp parallel for : l'exclusion mutuelle prend trop de temps, pas intéressant...
 	
 	// Trouver le minimum des minimum
 	MPI_Reduce(&local_min_ub, &min_ub, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
