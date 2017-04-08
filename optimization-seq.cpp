@@ -124,8 +124,35 @@ int main(void)
   cin >> precision;
   
   debut = clock();
+
+  // TESTS :
+
+  interval tabX[5];
+  interval tabY[5];
+
+  // Calcul de la taille des sous-intervalles de X
+  double siX = (fun.x.width()) / 5;
+  double siY = (fun.y.width()) / 5;
   
-  minimize(fun.f,fun.x,fun.y,precision,min_ub,minimums);
+  // Borne gauche de l'intervalle de X
+  double lx = fun.x.left();
+  double ly = fun.y.left();
+  
+  // Remplissage des tableaux de sous-intervalles de X
+  for (int i = 0 ; i < 5 ; ++i){ 
+    tabX[i] = interval(lx + siX * i, lx + siX * (i + 1));
+    tabY[i] = interval(ly + siY * i, ly + siY * (i + 1));
+  }
+
+  for (int i = 0 ; i < 5 ; ++i){
+    double tmp_min_ub = numeric_limits<double>::infinity();
+    minimizer_list tmp_minimus;
+    minimize(fun.f,tabX[i],tabY[i],precision,tmp_min_ub,tmp_minimus);
+    if(min_ub>tmp_min_ub)
+      min_ub = tmp_min_ub;
+  }
+  
+  //minimize(fun.f,fun.x,fun.y,precision,min_ub,minimums);
   
   fin = clock();
   
