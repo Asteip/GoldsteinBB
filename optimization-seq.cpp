@@ -145,11 +145,13 @@ int main(void)
   }
 
   for (int i = 0 ; i < 5 ; ++i){
-    double tmp_min_ub = numeric_limits<double>::infinity();
-    minimizer_list tmp_minimus;
-    minimize(fun.f,tabX[i],tabY[i],precision,tmp_min_ub,tmp_minimus);
-    if(min_ub>tmp_min_ub)
-      min_ub = tmp_min_ub;
+    for(int j = 0 ; j < 5 ; ++j){
+      double tmp_min_ub = numeric_limits<double>::infinity();
+      minimizer_list tmp_minimus;
+      minimize(fun.f,tabX[i],tabY[j],precision,tmp_min_ub,tmp_minimus);
+      if(min_ub>tmp_min_ub)
+        min_ub = tmp_min_ub;
+    }
   }
   
   //minimize(fun.f,fun.x,fun.y,precision,min_ub,minimums);
