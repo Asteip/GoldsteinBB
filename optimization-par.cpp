@@ -51,7 +51,6 @@ void minimize(itvfun f,  // Function to minimize
 		return ;
 	}
 
-	
 	if (fxy.right() < min_ub) { // Current box contains a new minimum?
 		#pragma omp critical
 		{
@@ -63,7 +62,6 @@ void minimize(itvfun f,  // Function to minimize
 		}
 	}
 	
-
 	// Checking whether the input box is small enough to stop searching.
 	// We can consider the width of one dimension only since a box
 	// is always split equally along both dimensions
@@ -224,9 +222,8 @@ int main(int argc, char * argv[])
 		//minimizer_list minimums_private;
 		
 		//#pragma omp parallel for //reduction (min:local_min_ub)
-		#pragma omp parallel for shared(local_min_ub)
-		for(int i = 0 ; i < numProcs ; ++i){
-			minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub,minimums);
+		//for(int i = 0 ; i < numProcs ; ++i){
+			//minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub,minimums);
 			
 			//#pragma omp critical
 			//{
@@ -235,8 +232,15 @@ int main(int argc, char * argv[])
 				
 			//	minimums = minimums_private;
 			//}
-		}
+		//}
 	//}
+
+	#pragma omp parallel for shared(local_min_ub)
+	for(int i = 0 ; i < numProcs ; ++i){
+		minimize(fun.f,sliceX[0],tabY[i],precision,local_min_ub,minimums);
+	}
+
+	//Note : le reduction(min:local_min_ub) diminue les performances...
 	
 	// Trouver le minimum des minimum
 	MPI_Reduce(&local_min_ub, &min_ub, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);

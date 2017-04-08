@@ -130,9 +130,10 @@ int main(void)
   fin = clock();
   
   // Displaying all potential minimizers
-  copy(minimums.begin(),minimums.end(),
-       ostream_iterator<minimizer>(cout,"\n"));    
-  cout << "Number of minimizers: " << minimums.size() << endl;
+  /*copy(minimums.begin(),minimums.end(),
+       ostream_iterator<minimizer>(cout,"\n"));*/
+
+  //cout << "Number of minimizers: " << minimums.size() << endl;
   cout << "Upper bound for minimum: " << min_ub << endl;
   cout << "Time : " << (double) (fin - debut) / CLOCKS_PER_SEC << "s" << endl;
 }
