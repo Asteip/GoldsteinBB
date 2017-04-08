@@ -8,7 +8,7 @@
   v. 1.0, 2013-02-15
 */
 
-// POUR EXÉCUTER : mpirun -np 2 --hostfile ./hostfile ./optimization-par
+// POUR EXÉCUTER : mpirun -np 2 --hostfile ./hostfile ./optimization-mpi
 
 #include <iostream>
 #include <iterator>
