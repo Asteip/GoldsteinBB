@@ -1,0 +1,115 @@
+\section{Implémentation avec MPI}
+\label{sec:mpi}
+
+\subsection{Choix d'implémentation}
+
+    \paragraph{}
+    L'implémentation de l'algorithme avec MPI se trouve dans le fichier \textit{optimization-mpi.cpp}. 
+    
+    \paragraph{}
+    Tout d'abord, la saisie de la fonction et de la précision se fait sur la machine de rang 0. Ces deux informations sont ensuite envoyées à toutes les machines en broadcast (\textit{MPI\_Bcast()}) depuis la machine de rang 0.
+    
+    \paragraph{}
+    Dans notre solution, nous avons choisi de diviser les intervalles X et Y de la fonction en autant de sous-intervalles qu'il y a de machines disponibles (numprocs). Seuls les sous-intervalles de X sont envoyés sur le réseau via la fonction \textit{MPI\_Scatter()} (chaque machine traite donc un sous-intervalle de X). En effet, chaque machine doit connaître tous les intervalles de Y afin de vérifier tous les couples (x,y) possibles lors de l'appel à la fonction \textit{minimize()}. L'objectif de séparer à la fois X et Y et non X seul est de pouvoir traiter des domaines en cube et non en pavé (qui ne sont pas adaptés à l'heuristique). C'est donc la machine de rang 0 qui est chargée de découper l'intervalle X et chaque machine fait ensuite son propre découpage de Y. Ici une autre solution aurait pu être de découper l'intervalle Y dans la machine de rang 0 et d'envoyer le découpage à chaque machine (tout comme pour l'intervalle X). Nous préférons la première solution puisque nous pensons que les temps de transfert sur un réseau des sous-intervalles de Y sont plus élevés qu'un simple découpage sur chaque machine.
+    
+    \paragraph{}
+    Une fois toutes les machines initialisées, celles-ci exécutent l'algorithme de minimisation (\textit{minimize()}) pour leur sous-intervalle de X et pour tous les sous-intervalles de Y. Le résultat final est ensuite obtenu en faisant une réduction sur le minimum calculé par chaque machine (\textit{MPI\_Reduce()}). Pour finir, l'affichage du résultat se fait sur la machine de rang 0.    
+
+\subsection{Tableaux des performances}
+
+    \paragraph{}
+    Les jeux de tests suivants ont été effectués pour chaque fonction sur des nombres différents de machines. Les temps affichés sont en secondes.
+    
+    \begin{figure}[!h]
+        \begin{center}
+            \begin{tabular}{|c|c|c|c|c|c|}
+            \hline
+                 & \multicolumn{5}{c|}{\textbf{Nombre de machines}} \\ \hline
+                \textbf{Précision} & 1 & 2 & 3 & 4 & 5 \\ \hline
+                1$e^{-1}$ & 1.0$e^{-2}$ & 2.1$e^{-3}$ & 2.9$e^{-3}$ & 1.9$e^{-3}$ & 1$e^{-2}$ \\ \hline
+                1$e^{-2}$ & 2.8$e^{-2}$ & 1.8$e^{-2}$ & 2.3$e^{-2}$ & 1.5$e^{-2}$ & 2.0$e{-2}$ \\ \hline
+                1$e^{-3}$ & 2.9$e^{-1}$ & 2.7$e^{-1}$ & 1.9$e^{-1}$ & 2.4$e^{-1}$ & 1.5$e^{-1}$ \\ \hline
+                1$e^{-4}$ & 2.3 & 2.2 & 3.0 & 1.9 & 2.3 \\ \hline
+                1$e^{-5}$ & 18 & 17 & 24 & 15 & 19 \\ \hline
+            \end{tabular}
+            \caption{Temps d'exécution de l'algorithme (en secondes) pour la fonction booth}
+            \label{tab:mpi-booth}
+        \end{center}
+    \end{figure}
+    
+    \begin{figure}[!h]
+        \begin{center}
+            \begin{tabular}{|c|c|c|c|c|c|}
+            \hline
+                 & \multicolumn{5}{c|}{\textbf{Nombre de machines}} \\ \hline
+                \textbf{Précision} & 1 & 2 & 3 & 4 & 5 \\ \hline
+                1$e^{-1}$ & 5.0$e^{-2}$ & 3.5$e^{-3}$ & 1.5$e^{-3}$ & 2.0$e^{-3}$ & 6.0$e^{-2}$ \\ \hline
+                1$e^{-2}$ & 2.8$e^{-2}$ & 2.1$e^{-2}$ & 2.3$e^{-2}$ & 1.7$e^{-2}$ & 5.0$e{-2}$ \\ \hline
+                1$e^{-3}$ & 2.3$e^{-1}$ & 3.4$e^{-1}$ & 1.6$e^{-1}$ & 3.4$e^{-1}$ & 2.5$e^{-1}$ \\ \hline
+                1$e^{-4}$ & 2.8 & 3.9 & 1.3 & 2.9 & 3.0 \\ \hline
+                1$e^{-5}$ & 23 & 28 & 21 & 21 & 25 \\ \hline
+            \end{tabular}
+            \caption{Temps d'exécution de l'algorithme (en secondes) pour la fonction beale}
+            \label{tab:mpi-beale}
+        \end{center}
+    \end{figure}
+    
+    \begin{figure}[!h]
+        \begin{center}
+            \begin{tabular}{|c|c|c|c|c|c|}
+            \hline
+                 & \multicolumn{5}{c|}{\textbf{Nombre de machines}} \\ \hline
+                \textbf{Précision} & 1 & 2 & 3 & 4 & 5 \\ \hline
+                1$e^{-1}$ & 1$e^{-2}$ & 5.0$e^{-3}$ & 3.0$e^{-3}$ & 3.5$e^{-3}$ & 5.0$e^{-3}$ \\ \hline
+                1$e^{-2}$ & 1.1$e^{-1}$ & 6.0$e^{-2}$ & 7.5$e^{-2}$ & 3.8$e^{-2}$ & 8.0$e^{-2}$ \\ \hline
+                1$e^{-3}$ & 1.4 & 1.1 & 1.6$e^{-1}$ & 7.5$e^{-1}$ & 1.1 \\ \hline
+                1$e^{-4}$ & 56 & 57 & 31 & 43 & 20 \\ \hline
+            \end{tabular}
+            \caption{Temps d'exécution de l'algorithme (en secondes) pour la fonction goldstein\_price}
+            \label{tab:mpi-goldstein-price}
+        \end{center}
+    \end{figure}
+    
+    \begin{figure}[!h]
+        \begin{center}
+            \begin{tabular}{|c|c|c|c|c|c|}
+            \hline
+                 & \multicolumn{5}{c|}{\textbf{Nombre de machines}} \\ \hline
+                \textbf{Précision} & 1 & 2 & 3 & 4 & 5 \\ \hline
+                1$e^{-1}$ & 9.0$e^{-3}$ & 5.5$e^{-3}$ & 2.8$e^{-3}$ & 3.0$e^{-3}$ & 6.0$^{-3}$ \\ \hline
+                1$e^{-2}$ & 1.1$e^{-1}$ & 6.2$e^{-2}$ & 7.6$e^{-2}$ & 3.5$e^{-2}$ & 8.5$e^{-2}$ \\ \hline
+                1$e^{-3}$ & 1.4 & 1.1 & 1.4 & 7.6$e^{-1}$ & 1.0 \\ \hline
+                1$e^{-4}$ & 57 & 57 & 31 & 41 & 21 \\ \hline
+            \end{tabular}
+            \caption{Temps d'exécution de l'algorithme (en secondes) pour la fonction three\_hump\_camel}
+            \label{tab:mpi-three-hump-camel}
+        \end{center}
+    \end{figure}
+    
+    \FloatBarrier
+    
+    \paragraph{}
+    On observe que les résultats peuvent changer en fonction du nombre de machines spécifié par l'utilisateur. Cette différence est explicable si la fonction \textit{minimize()} renvoie une valeur différente en fonction de l'intervalle donné, même si les minimums se situent au même point. En effet, nous divisons le premier intervalle en parts égales selon le nombre de machines. L'algorithme utilisant une dichotomie, il est normal que si nous utilisons un nombre de machine $n$, nous obtenons le même résultat sur des instances où le nombre de machine est de la forme $n*2^k$. En effet, $n*2^k$ est aussi le nombre de divisions égales de l'intervalle de départ à l'itération $k$ pour l'instance avec $n$ machines.
+    
+    \FloatBarrier
+    
+    \begin{figure}[!h]
+        \begin{center}
+            \begin{tabular}{|c|c|c|}
+            \hline
+                \textbf{Fonction} & \textbf{Version séquentielle} & \textbf{Version parallèle} \\ \hline
+                booth & 3.8 & 1.9  \\ \hline
+                beale & 4.4 &  2.9 \\ \hline
+                goldstein\_price & 93 & 43 \\ \hline
+                three\_hump\_camel & 110 & 41 \\ \hline
+            \end{tabular}
+            \caption{Comparaisons des temps (en secondes) entre la version séquentielle et la version parallèle pour une précision de 0.0001 et pour 4 machines}
+            \label{tab:compare-mpi}
+        \end{center}
+    \end{figure}
+    
+    \FloatBarrier
+    
+    \paragraph{}
+    
+    On remarque ici que les temps d'exécution du programme en séquentiel sont deux fois plus élevés qu'avec le programme en MPI. Cela montre bien que la parallélisation de l'algorithme est intéressante avec MPI pour ce problème. Pour avoir une meilleure vision de la puissance de calcul, il faudrait lancer l'exécution sur plusieurs machines et non sur une seule.

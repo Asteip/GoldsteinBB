@@ -1,0 +1,70 @@
+\documentclass[11pt]{article}
+
+% ENCODAGE CARACTERES
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[frenchb]{babel}
+
+% MISE EN FORME
+\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm]{geometry}
+\usepackage[colorlinks=true,urlcolor=blue]{hyperref}
+\usepackage[justification=centering]{caption}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{placeins}
+
+\hypersetup{linkcolor=blue}
+
+\title{Projet de multicore programming (X8II070)}
+\author{Alexis BONNIN \and Jocelin CAILLOUX}
+\date{Avril 2017}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+    Vous trouverez dans ce document un rapport du projet de "Multicore Programming". Il détaille les performances obtenues avec les différentes implémentations de version parallèle de l'algorithme de branch-and-bound permettant de calculer le minimum d'une fonction binaire réelle.
+\end{abstract}
+\tableofcontents
+\newpage
+
+\section{Introduction}
+    
+    \paragraph{}
+    Ce projet s'inscrit dans le module de "Multicore Programming". Il consiste à paralléliser un algorithme de "branch-and-bound" utilisant l'arithmétique d'intervalle et permettant de trouver le minimum d'une fonction binaire réelle à partir d'un ensemble de domaines. Pour cela, deux versions de l'algorithme ont été implémentées : la première utilisant seulement MPI et la deuxième, utilisant à la fois MPI et OpenMP.
+    
+    \paragraph{}
+    Le projet est disponible sur github à l'adresse : \url{https://github.com/Asteip/GoldsteinBB.git}. Pour installer le projet, il suffit d'exécuter la commande \textit{make} à la racine du répertoire (il sera peut-être nécessaire de modifier le fichier makefile pour les dépendances). Le programme peut ensuite être exécuté avec les commandes suivantes :
+    
+    \begin{itemize}
+        \item Version séquentielle :
+        \begin{lstlisting}[language=bash,captionpos=b]
+        ./optimization-seq
+        \end{lstlisting}
+        
+        \item Version avec MPI :
+        \begin{lstlisting}[language=bash,captionpos=b]
+        mpirun -np 2 --hostfile ./hostfile ./optimization-mpi
+        \end{lstlisting}
+        
+        \item Version avec MPI et OpenMP :
+        \begin{lstlisting}[language=bash,captionpos=b]
+        mpirun -np 2 --hostfile ./hostfile ./optimization-par
+        \end{lstlisting}
+    \end{itemize}
+
+\input{mpi}
+\FloatBarrier
+
+\input{omp}
+\FloatBarrier
+
+\section{Conclusion}
+    \paragraph{}
+    Notre solution actuelle permet d'avoir des temps raisonnables par rapport à l'algorithme séquentiel jusqu'à une précision de l'ordre de 0.00001. Les temps d'exécution entre la version avec OpenMP et sans OpenMP sont similaires sur les précisions faibles et plus significatifs sur les grandes précisions : on peut noter des variations suivant la fonction testée, dans certains cas la première version sera meilleure (ex: booth) et dans d'autre, la seconde sera à privilégier (ex: beale).
+    
+    \paragraph{}
+    Il est possible d'améliorer les performances en modifiant l'heuristique de façon à adapter l'algorithme à la version parallèle. Nous n'avons pas testé les bibliothèques Intel TBB et C++11 Thread pour ce projet, mais il pourrait être intéressant de comparer les performances avec ces implémentations. Concernant les difficultés rencontrées, nous avons passé du temps à comprendre comment découper les données du problème pour profiter au mieux des performances de MPI. Pour finir, ce projet nous a permis de mettre en pratique les outils de parallélisation vus en cours.
+
+\end{document}

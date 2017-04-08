@@ -1,0 +1,54 @@
+\section{Implémentation avec OpenMP}
+
+\subsection{Choix d'implémentation}
+    
+    \paragraph{}
+    L'implémentation de l'algorithme avec OpenMP se trouve dans le fichier \textit{optimization-par.cpp}. Ce fichier contient également l'implémentation avec MPI présentée dans la section~\ref{sec:mpi}.
+    
+    \paragraph{}
+    Tout d'abord, nous avons parallélisé les boucles "for" permettant le remplissage des tableaux contenant les sous-intervalles de X et de Y. Ceci peut paraître négligeable pour un petit nombre de machine mais peut devenir intéressant lorsque l'on doit faire le découpage pour beaucoup de machine. Ensuite, nous avons choisi de paralléliser la boucle qui appelle la fonction \textit{minimize()} avec un "parallel for" tout en partageant la variable "min\_ub" pour chaque thread. Nous avons testé une solution avec un "parallel for reduction" avec des sections critiques dans la boucles for (pour éviter les erreurs dues au partage de "min\_ub"). Cette solution entraînait des temps plus élevés à cause des sections critiques, c'est pourquoi nous l'avons abandonnée (mise en commentaire dans le code).
+    
+    \paragraph{}
+    Pour terminer, nous avons mis en place des "parallel section" dans la fonction \textit{minimize()} : nous avons créé une section pour chaque appel récursif à \textit{minimize()}, tout en limitant le nombre de thread à quatre. Il a été nécessaire d'ajouter des sections critiques dans la fonction où l'on accède en écriture aux variables partagées. On obtient, dans cette solution, de meilleures performances qu'avec un simple "parallel for" détaillé dans le paragraphe précédent.
+
+\subsection{Tableaux des performances}
+    
+    \paragraph{}
+    Les jeux de tests suivants ont été effectués pour un nombre de machines égal à 2. Les temps affichés sont en secondes.
+    
+    \begin{figure}[!h]
+        \begin{center}
+            \begin{tabular}{|c|c|c|c|c|}
+            \hline
+                 & \multicolumn{4}{c|}{\textbf{Préscision}} \\ \hline
+                \textbf{Fonction} & 0.1 & 0.01 & 0.001 & 0.0001 \\ \hline
+                booth & 0.056 & 0,14 & 0,89 & 6,57 \\ \hline
+                beale & 0.042 & 0.069 & 0.44 & 3.05 \\ \hline
+                goldstein\_price & 0.047 & 0.2 & 1.78 & 48.55  \\ \hline
+                three\_hump\_camel & 0.071 & 0.39 & 7.4 & 26.3 \\ \hline
+            \end{tabular}
+            \caption{Temps d'exécution de l'algorithme (en secondes) pour les différentes fonctions}
+            \label{tab:omp}
+        \end{center}
+    \end{figure}
+    
+    \begin{figure}[!h]
+        \begin{center}
+            \begin{tabular}{|c|c|c|}
+            \hline
+                \textbf{Fonction} & \textbf{Version séquentielle} & \textbf{Version parallèle} \\ \hline
+                booth & 3.8 & 6.57  \\ \hline
+                beale & 4.4 & 3.05  \\ \hline
+                goldstein\_price & 93.4 & 48.55   \\ \hline
+                three\_hump\_camel & 109.43 & 26.3 \\ \hline
+            \end{tabular}
+            \caption{Comparaisons des temps (en secondes) entre la version séquentielle et la version parallèle pour une précision de 0.0001}
+            \label{tab:compare-omp}
+        \end{center}
+    \end{figure}
+    
+    \FloatBarrier
+    
+    \paragraph{}
+    On remarque ici que pour une précision de 0.0001, on obtient des ratios de temps différents suivant les fonctions. Cela s'explique par le fait que certaines fonctions ont un résultat local satisfaisant plus rapide à calculer que les autres. Par exemple, dans le cas de la fonction goldstein\_price, le temps de calcul avec l'algorithme séquentiel est deux plus long qu'avec l'algorithme parallèle. 
+
