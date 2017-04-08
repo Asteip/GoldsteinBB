@@ -1,7 +1,7 @@
 # GoldsteinBB
 Implementation of parallel version of an interval arithmetic branch-and-bound procedure which allows to find the minimum of a binary real function over a box of domains.
 
-##How to install
+## How to install
 
 Clone the repository :
 ```bash
